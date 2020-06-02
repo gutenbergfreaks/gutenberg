@@ -12,7 +12,7 @@ import { useViewportMatch } from '@wordpress/compose';
  */
 import useNavigationBlocks from './use-navigation-blocks';
 import MenuEditorShortcuts from './shortcuts';
-import BlockEditorPanel from './block-editor-panel';
+import BlockEditorArea from './block-editor-area';
 import NavigationStructurePanel from './navigation-structure-panel';
 
 export default function MenuEditor( {
@@ -44,7 +44,7 @@ export default function MenuEditor( {
 					blocks={ blocks }
 					initialOpen={ isLargeViewport }
 				/>
-				<BlockEditorPanel
+				<BlockEditorArea
 					saveBlocks={ saveBlocks }
 					menuId={ menuId }
 					onDeleteMenu={ onDeleteMenu }
