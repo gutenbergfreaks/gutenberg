@@ -28,7 +28,11 @@ export const settings = {
 		'Introduce new sections and organize content to help visitors (and search engines) understand the structure of your content.'
 	),
 	icon,
-	keywords: [ __( 'title' ), __( 'subtitle' ), __( 'title,subtitle,heading' ) ],
+	keywords: [
+		__( 'title' ),
+		__( 'subtitle' ),
+		__( 'title,subtitle,heading' ),
+	],
 	example: {
 		attributes: {
 			content: __( 'Code is Poetry' ),
