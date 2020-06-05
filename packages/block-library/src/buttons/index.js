@@ -22,7 +22,7 @@ export const settings = {
 		'Prompt visitors to take action with a group of button-style links.'
 	),
 	icon,
-	keywords: [ __( 'link' ) ],
+	keywords: [ __( 'link' ), __( 'button,link' ) ],
 	transforms,
 	edit,
 	save,
