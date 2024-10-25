@@ -4,8 +4,16 @@
 const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
 
 test.describe( 'isTyping', () => {
+	test.beforeAll( async ( { requestUtils } ) => {
+		await requestUtils.activatePlugin( 'gutenberg-test-observe-typing' );
+	} );
+
 	test.beforeEach( async ( { admin } ) => {
 		await admin.createNewPost();
+	} );
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin( 'gutenberg-test-observe-typing' );
 	} );
 
 	test( 'should hide the toolbar when typing', async ( { editor, page } ) => {
@@ -14,24 +22,27 @@ test.describe( 'isTyping', () => {
 		// Insert paragraph
 		await page.keyboard.type( 'Type' );
 
-		const blockToolbar = page.locator(
-			'role=toolbar[name="Block tools"i]'
+		const blockToolbarPopover = page.locator(
+			'[data-wp-component="Popover"]',
+			{
+				has: page.locator( 'role=toolbar[name="Block tools"i]' ),
+			}
 		);
 
-		// Toolbar should not be showing
-		await expect( blockToolbar ).toBeHidden();
+		// Toolbar Popover should not be showing
+		await expect( blockToolbarPopover ).toBeHidden();
 
 		// Moving the mouse shows the toolbar.
 		await editor.showBlockToolbar();
 
-		// Toolbar is visible.
-		await expect( blockToolbar ).toBeVisible();
+		// Toolbar Popover is visible.
+		await expect( blockToolbarPopover ).toBeVisible();
 
 		// Typing again hides the toolbar
 		await page.keyboard.type( ' and continue' );
 
-		// Toolbar is hidden again
-		await expect( blockToolbar ).toBeHidden();
+		// Toolbar Popover is hidden again
+		await expect( blockToolbarPopover ).toBeHidden();
 	} );
 
 	test( 'should not close the dropdown when typing in it', async ( {
@@ -39,25 +50,23 @@ test.describe( 'isTyping', () => {
 		page,
 	} ) => {
 		// Add a block with a dropdown in the toolbar that contains an input.
-		await editor.insertBlock( { name: 'core/query' } );
+		await editor.insertBlock( { name: 'e2e-tests/observe-typing' } );
 
-		// Tab to Start Blank Button
-		await page.keyboard.press( 'Tab' );
-		// Select the Start Blank Button
-		await page.keyboard.press( 'Enter' );
-		// Select the First variation
-		await page.keyboard.press( 'Enter' );
 		// Moving the mouse shows the toolbar.
 		await editor.showBlockToolbar();
 		// Open the dropdown.
-		await page.getByRole( 'button', { name: 'Display settings' } ).click();
+		await page
+			.getByRole( 'button', {
+				name: 'Open Dropdown',
+			} )
+			.click();
 
-		const itemsPerPageInput = page.getByLabel( 'Items per Page' );
-		// Make sure we're where we think we are
-		await expect( itemsPerPageInput ).toBeFocused();
+		const textControl = page.getByRole( 'textbox', {
+			name: 'Dropdown field',
+		} );
 		// Type inside the dropdown's input
-		await page.keyboard.type( '00' );
+		await textControl.pressSequentially( 'Hello' );
 		// The input should still be visible.
-		await expect( itemsPerPageInput ).toBeVisible();
+		await expect( textControl ).toBeVisible();
 	} );
 } );

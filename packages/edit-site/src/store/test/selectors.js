@@ -1,36 +1,9 @@
 /**
- * WordPress dependencies
- */
-import { store as coreDataStore } from '@wordpress/core-data';
-
-/**
  * Internal dependencies
  */
-import {
-	getCanUserCreateMedia,
-	getEditedPostType,
-	getEditedPostId,
-	isInserterOpened,
-	isListViewOpened,
-	isPage,
-} from '../selectors';
+import { getEditedPostType, getEditedPostId, isPage } from '../selectors';
 
 describe( 'selectors', () => {
-	const canUser = jest.fn( () => true );
-	getCanUserCreateMedia.registry = {
-		select: jest.fn( () => ( { canUser } ) ),
-	};
-
-	describe( 'getCanUserCreateMedia', () => {
-		it( "selects `canUser( 'create', 'media' )` from the core store", () => {
-			expect( getCanUserCreateMedia() ).toBe( true );
-			expect(
-				getCanUserCreateMedia.registry.select
-			).toHaveBeenCalledWith( coreDataStore );
-			expect( canUser ).toHaveBeenCalledWith( 'create', 'media' );
-		} );
-	} );
-
 	describe( 'getEditedPostId', () => {
 		it( 'returns the template ID', () => {
 			const state = { editedPost: { id: 10 } };
@@ -42,28 +15,6 @@ describe( 'selectors', () => {
 		it( 'returns the template type', () => {
 			const state = { editedPost: { postType: 'wp_template' } };
 			expect( getEditedPostType( state ) ).toBe( 'wp_template' );
-		} );
-	} );
-
-	describe( 'isInserterOpened', () => {
-		it( 'returns the block inserter panel isOpened state', () => {
-			const state = {
-				blockInserterPanel: true,
-			};
-			expect( isInserterOpened( state ) ).toBe( true );
-			state.blockInserterPanel = false;
-			expect( isInserterOpened( state ) ).toBe( false );
-		} );
-	} );
-
-	describe( 'isListViewOpened', () => {
-		it( 'returns the list view panel isOpened state', () => {
-			const state = {
-				listViewPanel: true,
-			};
-			expect( isListViewOpened( state ) ).toBe( true );
-			state.listViewPanel = false;
-			expect( isListViewOpened( state ) ).toBe( false );
 		} );
 	} );
 

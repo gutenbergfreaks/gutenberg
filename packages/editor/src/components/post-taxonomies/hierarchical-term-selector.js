@@ -12,6 +12,7 @@ import {
 	withFilters,
 	Flex,
 	FlexItem,
+	SearchControl,
 } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useDebounce } from '@wordpress/compose';
@@ -406,9 +407,11 @@ export function HierarchicalTermSelector( { slug } ) {
 	return (
 		<Flex direction="column" gap="4">
 			{ showFilter && (
-				<TextControl
+				<SearchControl
+					__next40pxDefaultSize
 					__nextHasNoMarginBottom
 					label={ filterLabel }
+					placeholder={ filterLabel }
 					value={ filterValue }
 					onChange={ setFilter }
 				/>
@@ -426,6 +429,7 @@ export function HierarchicalTermSelector( { slug } ) {
 			{ ! loading && hasCreateAction && (
 				<FlexItem>
 					<Button
+						__next40pxDefaultSize
 						onClick={ onToggleForm }
 						className="editor-post-taxonomies__hierarchical-terms-add"
 						aria-expanded={ showForm }
@@ -439,6 +443,7 @@ export function HierarchicalTermSelector( { slug } ) {
 				<form onSubmit={ onAddTerm }>
 					<Flex direction="column" gap="4">
 						<TextControl
+							__next40pxDefaultSize
 							__nextHasNoMarginBottom
 							className="editor-post-taxonomies__hierarchical-terms-input"
 							label={ newTermLabel }
@@ -448,6 +453,7 @@ export function HierarchicalTermSelector( { slug } ) {
 						/>
 						{ !! availableTerms.length && (
 							<TreeSelect
+								__next40pxDefaultSize
 								__nextHasNoMarginBottom
 								label={ parentSelectLabel }
 								noOptionLabel={ noParentOption }
@@ -458,6 +464,7 @@ export function HierarchicalTermSelector( { slug } ) {
 						) }
 						<FlexItem>
 							<Button
+								__next40pxDefaultSize
 								variant="secondary"
 								type="submit"
 								className="editor-post-taxonomies__hierarchical-terms-submit"

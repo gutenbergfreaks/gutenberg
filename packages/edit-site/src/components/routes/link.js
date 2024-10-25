@@ -15,11 +15,10 @@ import {
 
 const { useHistory } = unlock( routerPrivateApis );
 
-export function useLink( params = {}, state, shouldReplace = false ) {
+export function useLink( params, state, shouldReplace = false ) {
 	const history = useHistory();
-
 	function onClick( event ) {
-		event.preventDefault();
+		event?.preventDefault();
 
 		if ( shouldReplace ) {
 			history.replace( params, state );
@@ -34,14 +33,17 @@ export function useLink( params = {}, state, shouldReplace = false ) {
 		...Object.keys( currentArgs )
 	);
 
+	let extraParams = {};
 	if ( isPreviewingTheme() ) {
-		params = {
-			...params,
+		extraParams = {
 			wp_theme_preview: currentlyPreviewingTheme(),
 		};
 	}
 
-	const newUrl = addQueryArgs( currentUrlWithoutArgs, params );
+	const newUrl = addQueryArgs( currentUrlWithoutArgs, {
+		...params,
+		...extraParams,
+	} );
 
 	return {
 		href: newUrl,

@@ -24,6 +24,8 @@ _Returns_
 
 ### getCurrentTemplateTemplateParts
 
+> **Deprecated**
+
 Returns the template parts and their blocks for the current edited template.
 
 _Parameters_
@@ -58,7 +60,7 @@ _Parameters_
 
 _Returns_
 
--   `string?`: Post ID.
+-   `?string`: Post ID.
 
 ### getEditedPostType
 
@@ -70,7 +72,7 @@ _Parameters_
 
 _Returns_
 
--   `TemplateType?`: Template type.
+-   `?TemplateType`: Template type.
 
 ### getEditorMode
 
@@ -157,7 +159,9 @@ _Returns_
 
 ### isInserterOpened
 
-Returns the current opened/closed state of the inserter panel.
+> **Deprecated**
+
+Returns true if the inserter is opened.
 
 _Parameters_
 
@@ -165,11 +169,11 @@ _Parameters_
 
 _Returns_
 
--   `boolean`: True if the inserter panel should be open; false if closed.
+-   `boolean`: Whether the inserter is opened.
 
 ### isListViewOpened
 
-Returns the current opened/closed state of the list view panel.
+Returns true if the list view is opened.
 
 _Parameters_
 
@@ -177,7 +181,7 @@ _Parameters_
 
 _Returns_
 
--   `boolean`: True if the list view panel should be open; false if closed.
+-   `boolean`: Whether the list view is opened.
 
 ### isNavigationOpened
 
@@ -307,25 +311,23 @@ _Parameters_
 
 ### setIsInserterOpened
 
-Opens or closes the inserter.
+> **Deprecated**
+
+Returns an action object used to open/close the inserter.
 
 _Parameters_
 
--   _value_ `boolean|Object`: Whether the inserter should be opened (true) or closed (false). To specify an insertion point, use an object.
--   _value.rootClientId_ `string`: The root client ID to insert at.
--   _value.insertionIndex_ `number`: The index to insert at.
-
-_Returns_
-
--   `Object`: Action object.
+-   _value_ `boolean|Object`: Whether the inserter should be opened (true) or closed (false).
 
 ### setIsListViewOpened
 
-Sets whether the list view panel should be open.
+> **Deprecated**
+
+Returns an action object used to open/close the list view.
 
 _Parameters_
 
--   _isOpen_ `boolean`: If true, opens the list view. If false, closes it. It does not toggle the state, but sets it directly.
+-   _isOpen_ `boolean`: A boolean representing whether the list view should be opened or closed.
 
 ### setIsNavigationPanelOpened
 
@@ -371,7 +373,7 @@ Resolves the template for a page and displays both. If no path is given, attempt
 
 _Returns_
 
--   `number`: The resolved template ID for the page route.
+-   `Object`: Action object.
 
 ### setTemplate
 
@@ -395,9 +397,17 @@ _Returns_
 
 ### switchEditorMode
 
-Undocumented declaration.
+> **Deprecated**
+
+Triggers an action used to switch editor mode.
+
+_Parameters_
+
+-   _mode_ `string`: The editor mode.
 
 ### toggleDistractionFree
+
+> **Deprecated**
 
 Action that toggles Distraction free mode. Distraction free mode expects there are no sidebars, as due to the z-index values set, you can't close sidebars.
 

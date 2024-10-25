@@ -7,7 +7,6 @@ import type { CSSProperties } from 'react';
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { closeSmall } from '@wordpress/icons';
 
 /**
  * Internal dependencies
@@ -17,12 +16,10 @@ import Button from '../../button';
 import ColorIndicator from '../../color-indicator';
 import ColorPalette from '../../color-palette';
 import Dropdown from '../../dropdown';
-import { HStack } from '../../h-stack';
 import { VStack } from '../../v-stack';
 import type { WordPressComponentProps } from '../../context';
 import { contextConnect } from '../../context';
 import { useBorderControlDropdown } from './hook';
-import { StyledLabel } from '../../base-control/styles/base-control-styles';
 import DropdownContentWrapper from '../../dropdown/dropdown-content-wrapper';
 
 import type { ColorObject } from '../../color-palette/types';
@@ -142,13 +139,14 @@ const BorderControlDropdown = (
 		enableStyle,
 		indicatorClassName,
 		indicatorWrapperClassName,
+		isStyleSettable,
 		onReset,
 		onColorChange,
 		onStyleChange,
 		popoverContentClassName,
 		popoverControlsClassName,
 		resetButtonClassName,
-		showDropdownHeader,
+		size,
 		__unstablePopoverProps,
 		...otherProps
 	} = useBorderControlDropdown( props );
@@ -177,7 +175,8 @@ const BorderControlDropdown = (
 			aria-label={ toggleAriaLabel }
 			tooltipPosition={ dropdownPosition }
 			label={ __( 'Border color and style picker' ) }
-			showTooltip={ true }
+			showTooltip
+			__next40pxDefaultSize={ size === '__unstable-large' ? true : false }
 		>
 			<span className={ indicatorWrapperClassName }>
 				<ColorIndicator
@@ -194,17 +193,6 @@ const BorderControlDropdown = (
 		<>
 			<DropdownContentWrapper paddingSize="medium">
 				<VStack className={ popoverControlsClassName } spacing={ 6 }>
-					{ showDropdownHeader ? (
-						<HStack>
-							<StyledLabel>{ __( 'Border color' ) }</StyledLabel>
-							<Button
-								isSmall
-								label={ __( 'Close border color' ) }
-								icon={ closeSmall }
-								onClick={ onClose }
-							/>
-						</HStack>
-					) : undefined }
 					<ColorPalette
 						className={ popoverContentClassName }
 						value={ color }
@@ -216,7 +204,7 @@ const BorderControlDropdown = (
 						clearable={ false }
 						enableAlpha={ enableAlpha }
 					/>
-					{ enableStyle && (
+					{ enableStyle && isStyleSettable && (
 						<BorderControlStylePicker
 							label={ __( 'Style' ) }
 							value={ style }
@@ -234,6 +222,7 @@ const BorderControlDropdown = (
 							onReset();
 							onClose();
 						} }
+						__next40pxDefaultSize
 					>
 						{ __( 'Reset' ) }
 					</Button>

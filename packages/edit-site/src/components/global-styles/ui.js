@@ -2,11 +2,9 @@
  * WordPress dependencies
  */
 import {
-	__experimentalNavigatorProvider as NavigatorProvider,
-	__experimentalNavigatorScreen as NavigatorScreen,
-	__experimentalUseNavigator as useNavigator,
+	Navigator,
+	useNavigator,
 	createSlotFill,
-	Button,
 	DropdownMenu,
 	MenuGroup,
 	MenuItem,
@@ -19,7 +17,7 @@ import {
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import { store as preferencesStore } from '@wordpress/preferences';
-import { backup, moreVertical } from '@wordpress/icons';
+import { moreVertical } from '@wordpress/icons';
 import { store as coreStore } from '@wordpress/core-data';
 import { useEffect } from '@wordpress/element';
 
@@ -34,8 +32,12 @@ import {
 import ScreenBlock from './screen-block';
 import ScreenTypography from './screen-typography';
 import ScreenTypographyElement from './screen-typography-element';
+import FontSize from './font-sizes/font-size';
+import FontSizes from './font-sizes/font-sizes';
 import ScreenColors from './screen-colors';
 import ScreenColorPalette from './screen-color-palette';
+import ScreenBackground from './screen-background';
+import { ScreenShadows, ScreenShadowsEdit } from './screen-shadows';
 import ScreenLayout from './screen-layout';
 import ScreenStyleVariations from './screen-style-variations';
 import StyleBook from '../style-book';
@@ -43,6 +45,7 @@ import ScreenCSS from './screen-css';
 import ScreenRevisions from './screen-revisions';
 import { unlock } from '../../lock-unlock';
 import { store as editSiteStore } from '../../store';
+import { STYLE_BOOK_COLOR_GROUPS } from '../style-book/constants';
 
 const SLOT_FILL_NAME = 'GlobalStylesMenu';
 const { useGlobalStylesReset } = unlock( blockEditorPrivateApis );
@@ -68,15 +71,17 @@ function GlobalStylesActionMenu() {
 	const { setEditorCanvasContainerView } = unlock(
 		useDispatch( editSiteStore )
 	);
-	const { goTo } = useNavigator();
 	const loadCustomCSS = () => {
 		setEditorCanvasContainerView( 'global-styles-css' );
-		goTo( '/css' );
 	};
 
 	return (
 		<GlobalStylesMenuFill>
-			<DropdownMenu icon={ moreVertical } label={ __( 'More' ) }>
+			<DropdownMenu
+				icon={ moreVertical }
+				label={ __( 'More' ) }
+				toggleProps={ { size: 'compact' } }
+			>
 				{ ( { onClose } ) => (
 					<>
 						<MenuGroup>
@@ -115,61 +120,9 @@ function GlobalStylesActionMenu() {
 	);
 }
 
-function GlobalStylesRevisionsMenu() {
-	const { setIsListViewOpened } = useDispatch( editSiteStore );
-	const { revisionsCount } = useSelect( ( select ) => {
-		const { getEntityRecord, __experimentalGetCurrentGlobalStylesId } =
-			select( coreStore );
-
-		const globalStylesId = __experimentalGetCurrentGlobalStylesId();
-		const globalStyles = globalStylesId
-			? getEntityRecord( 'root', 'globalStyles', globalStylesId )
-			: undefined;
-
-		return {
-			revisionsCount:
-				globalStyles?._links?.[ 'version-history' ]?.[ 0 ]?.count ?? 0,
-		};
-	}, [] );
-	const { goTo } = useNavigator();
-	const { setEditorCanvasContainerView } = unlock(
-		useDispatch( editSiteStore )
-	);
-	const isRevisionsOpened = useSelect(
-		( select ) =>
-			'global-styles-revisions' ===
-			unlock( select( editSiteStore ) ).getEditorCanvasContainerView(),
-		[]
-	);
-	const loadRevisions = () => {
-		setIsListViewOpened( false );
-
-		if ( ! isRevisionsOpened ) {
-			goTo( '/revisions' );
-			setEditorCanvasContainerView( 'global-styles-revisions' );
-		} else {
-			goTo( '/' );
-			setEditorCanvasContainerView( undefined );
-		}
-	};
-	const hasRevisions = revisionsCount > 0;
-
-	return (
-		<GlobalStylesMenuFill>
-			<Button
-				label={ __( 'Revisions' ) }
-				icon={ backup }
-				onClick={ loadRevisions }
-				disabled={ ! hasRevisions }
-				isPressed={ isRevisionsOpened }
-			/>
-		</GlobalStylesMenuFill>
-	);
-}
-
 function GlobalStylesNavigationScreen( { className, ...props } ) {
 	return (
-		<NavigatorScreen
+		<Navigator.Screen
 			className={ [
 				'edit-site-global-styles-sidebar__navigator-screen',
 				className,
@@ -239,6 +192,16 @@ function GlobalStylesStyleBook() {
 				)
 			}
 			onSelect={ ( blockName ) => {
+				if (
+					STYLE_BOOK_COLOR_GROUPS.find(
+						( group ) => group.slug === blockName
+					)
+				) {
+					// Go to color palettes Global Styles.
+					navigator.goTo( '/colors/palette' );
+					return;
+				}
+
 				// Now go to the selected block.
 				navigator.goTo( '/blocks/' + encodeURIComponent( blockName ) );
 			} }
@@ -289,31 +252,43 @@ function GlobalStylesEditorCanvasContainerLink() {
 			unlock( select( editSiteStore ) ).getEditorCanvasContainerView(),
 		[]
 	);
+	const path = location?.path;
+	const isRevisionsOpen = path === '/revisions';
 
 	// If the user switches the editor canvas container view, redirect
 	// to the appropriate screen. This effectively allows deep linking to the
 	// desired screens from outside the global styles navigation provider.
 	useEffect( () => {
-		if ( editorCanvasContainerView === 'global-styles-revisions' ) {
-			// Switching to the revisions container view should
-			// redirect to the revisions screen.
-			goTo( '/revisions' );
-		} else if (
-			!! editorCanvasContainerView &&
-			location?.path === '/revisions'
-		) {
-			// Switching to any container other than revisions should
-			// redirect from the revisions screen to the root global styles screen.
-			goTo( '/' );
-		} else if ( editorCanvasContainerView === 'global-styles-css' ) {
-			goTo( '/css' );
+		switch ( editorCanvasContainerView ) {
+			case 'global-styles-revisions':
+			case 'global-styles-revisions:style-book':
+				if ( ! isRevisionsOpen ) {
+					goTo( '/revisions' );
+				}
+				break;
+			case 'global-styles-css':
+				goTo( '/css' );
+				break;
+			// The stand-alone style book is open
+			// and the revisions panel is open,
+			// close the revisions panel.
+			// Otherwise keep the style book open while
+			// browsing global styles panel.
+			//
+			// Falling through as it matches the default scenario.
+			case 'style-book':
+			default:
+				// In general, if the revision screen is in view but the
+				// `editorCanvasContainerView` is not a revision view, close it.
+				// This also includes the scenario when the stand-alone style
+				// book is open, in which case we want the user to close the
+				// revisions screen and browse global styles.
+				if ( isRevisionsOpen ) {
+					goTo( '/', { isBack: true } );
+				}
+				break;
 		}
-
-		// location?.path is not a dependency because we don't want to track it.
-		// Doing so will cause an infinite loop. We could abstract logic to avoid
-		// having to disable the check later.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ editorCanvasContainerView, goTo ] );
+	}, [ editorCanvasContainerView, isRevisionsOpen, goTo ] );
 }
 
 function GlobalStylesUI() {
@@ -324,7 +299,7 @@ function GlobalStylesUI() {
 		[]
 	);
 	return (
-		<NavigatorProvider
+		<Navigator
 			className="edit-site-global-styles-sidebar__navigator-provider"
 			initialPath="/"
 		>
@@ -342,6 +317,14 @@ function GlobalStylesUI() {
 
 			<GlobalStylesNavigationScreen path="/typography">
 				<ScreenTypography />
+			</GlobalStylesNavigationScreen>
+
+			<GlobalStylesNavigationScreen path="/typography/font-sizes">
+				<FontSizes />
+			</GlobalStylesNavigationScreen>
+
+			<GlobalStylesNavigationScreen path="/typography/font-sizes/:origin/:slug">
+				<FontSize />
 			</GlobalStylesNavigationScreen>
 
 			<GlobalStylesNavigationScreen path="/typography/text">
@@ -368,6 +351,14 @@ function GlobalStylesUI() {
 				<ScreenColors />
 			</GlobalStylesNavigationScreen>
 
+			<GlobalStylesNavigationScreen path="/shadows">
+				<ScreenShadows />
+			</GlobalStylesNavigationScreen>
+
+			<GlobalStylesNavigationScreen path="/shadows/edit/:category/:slug">
+				<ScreenShadowsEdit />
+			</GlobalStylesNavigationScreen>
+
 			<GlobalStylesNavigationScreen path="/layout">
 				<ScreenLayout />
 			</GlobalStylesNavigationScreen>
@@ -376,8 +367,12 @@ function GlobalStylesUI() {
 				<ScreenCSS />
 			</GlobalStylesNavigationScreen>
 
-			<GlobalStylesNavigationScreen path={ '/revisions' }>
+			<GlobalStylesNavigationScreen path="/revisions">
 				<ScreenRevisions />
+			</GlobalStylesNavigationScreen>
+
+			<GlobalStylesNavigationScreen path="/background">
+				<ScreenBackground />
 			</GlobalStylesNavigationScreen>
 
 			{ blocks.map( ( block ) => (
@@ -403,11 +398,10 @@ function GlobalStylesUI() {
 				<GlobalStylesStyleBook />
 			) }
 
-			<GlobalStylesRevisionsMenu />
 			<GlobalStylesActionMenu />
 			<GlobalStylesBlockLink />
 			<GlobalStylesEditorCanvasContainerLink />
-		</NavigatorProvider>
+		</Navigator>
 	);
 }
 export { GlobalStylesMenuSlot };

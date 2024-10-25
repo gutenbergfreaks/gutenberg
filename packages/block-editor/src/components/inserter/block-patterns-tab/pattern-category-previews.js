@@ -17,6 +17,7 @@ import {
 	__experimentalText as Text,
 	FlexBlock,
 } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 
 /**
  * Internal dependencies
@@ -30,8 +31,10 @@ import {
 	isPatternFiltered,
 	allPatternsCategory,
 	myPatternsCategory,
-	PATTERN_TYPES,
+	INSERTER_PATTERN_TYPES,
 } from './utils';
+import { store as blockEditorStore } from '../../../store';
+import { unlock } from '../../../lock-unlock';
 
 const noop = () => {};
 
@@ -42,9 +45,14 @@ export function PatternCategoryPreviews( {
 	category,
 	showTitlesAsTooltip,
 } ) {
+	const isZoomOutMode = useSelect(
+		( select ) => unlock( select( blockEditorStore ) ).isZoomOut(),
+		[]
+	);
 	const [ allPatterns, , onClickPattern ] = usePatternsState(
 		onInsert,
-		rootClientId
+		rootClientId,
+		category?.name
 	);
 	const [ patternSyncFilter, setPatternSyncFilter ] = useState( 'all' );
 	const [ patternSourceFilter, setPatternSourceFilter ] = useState( 'all' );
@@ -70,27 +78,27 @@ export function PatternCategoryPreviews( {
 				if ( category.name === allPatternsCategory.name ) {
 					return true;
 				}
+
 				if (
 					category.name === myPatternsCategory.name &&
-					pattern.type === PATTERN_TYPES.user
+					pattern.type === INSERTER_PATTERN_TYPES.user
 				) {
 					return true;
 				}
-				if ( category.name !== 'uncategorized' ) {
-					return pattern.categories?.includes( category.name );
+
+				if ( category.name === 'uncategorized' ) {
+					// The uncategorized category should show all the patterns without any category...
+					if ( ! pattern.categories ) {
+						return true;
+					}
+
+					// ...or with no available category.
+					return ! pattern.categories.some( ( catName ) =>
+						availableCategories.some( ( c ) => c.name === catName )
+					);
 				}
 
-				// The uncategorized category should show all the patterns without any category
-				// or with no available category.
-				const availablePatternCategories =
-					pattern.categories?.filter( ( cat ) =>
-						availableCategories.find(
-							( availableCategory ) =>
-								availableCategory.name === cat
-						)
-					) ?? [];
-
-				return availablePatternCategories.length === 0;
+				return pattern.categories?.includes( category.name );
 			} ),
 		[
 			allPatterns,
@@ -109,7 +117,6 @@ export function PatternCategoryPreviews( {
 	const { changePage } = pagingProps;
 
 	// Hide block pattern preview on unmount.
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect( () => () => onHover( null ), [] );
 
 	const onSetPatternSyncFilter = useCallback(
@@ -128,14 +135,19 @@ export function PatternCategoryPreviews( {
 	);
 
 	return (
-		<div className="block-editor-inserter__patterns-category-panel">
+		<>
 			<VStack
 				spacing={ 2 }
 				className="block-editor-inserter__patterns-category-panel-header"
 			>
 				<HStack>
 					<FlexBlock>
-						<Heading level={ 4 } as="div">
+						<Heading
+							className="block-editor-inserter__patterns-category-panel-title"
+							size={ 13 }
+							level={ 4 }
+							as="div"
+						>
 							{ category.label }
 						</Heading>
 					</FlexBlock>
@@ -157,23 +169,33 @@ export function PatternCategoryPreviews( {
 					</Text>
 				) }
 			</VStack>
-
 			{ currentCategoryPatterns.length > 0 && (
-				<BlockPatternsList
-					ref={ scrollContainerRef }
-					shownPatterns={ pagingProps.categoryPatternsAsyncList }
-					blockPatterns={ pagingProps.categoryPatterns }
-					onClickPattern={ onClickPattern }
-					onHover={ onHover }
-					label={ category.label }
-					orientation="vertical"
-					category={ category.name }
-					isDraggable
-					showTitlesAsTooltip={ showTitlesAsTooltip }
-					patternFilter={ patternSourceFilter }
-					pagingProps={ pagingProps }
-				/>
+				<>
+					{ isZoomOutMode && (
+						<Text
+							size="12"
+							as="p"
+							className="block-editor-inserter__help-text"
+						>
+							{ __( 'Drag and drop patterns into the canvas.' ) }
+						</Text>
+					) }
+					<BlockPatternsList
+						ref={ scrollContainerRef }
+						shownPatterns={ pagingProps.categoryPatternsAsyncList }
+						blockPatterns={ pagingProps.categoryPatterns }
+						onClickPattern={ onClickPattern }
+						onHover={ onHover }
+						label={ category.label }
+						orientation="vertical"
+						category={ category.name }
+						isDraggable
+						showTitlesAsTooltip={ showTitlesAsTooltip }
+						patternFilter={ patternSourceFilter }
+						pagingProps={ pagingProps }
+					/>
+				</>
 			) }
-		</div>
+		</>
 	);
 }

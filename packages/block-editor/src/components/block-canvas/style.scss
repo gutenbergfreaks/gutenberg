@@ -1,0 +1,9 @@
+iframe[name="editor-canvas"] {
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	display: block;
+	background-color: transparent;
+	// Handles transitions between device previews
+	@include editor-canvas-resize-animation;
+}
