@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 /**
  * Internal dependencies
@@ -9,11 +9,18 @@ import type { Meta, StoryObj } from '@storybook/react';
 import ButtonGroup from '..';
 import Button from '../../button';
 
+/**
+ * ButtonGroup can be used to group any related buttons together.
+ * To emphasize related buttons, a group should share a common container.
+ *
+ * This component is deprecated. Use `ToggleGroupControl` instead.
+ */
 const meta: Meta< typeof ButtonGroup > = {
-	title: 'Components/ButtonGroup',
+	title: 'Components (Deprecated)/ButtonGroup',
+	id: 'components-buttongroup',
 	component: ButtonGroup,
 	argTypes: {
-		children: { control: { type: null } },
+		children: { control: false },
 	},
 	parameters: {
 		controls: { expanded: true },
@@ -26,8 +33,10 @@ export const Default: StoryObj< typeof ButtonGroup > = {
 	args: {
 		children: (
 			<>
-				<Button variant="primary">Button 1</Button>
-				<Button>Button 2</Button>
+				<Button __next40pxDefaultSize variant="primary">
+					Button 1
+				</Button>
+				<Button __next40pxDefaultSize>Button 2</Button>
 			</>
 		),
 	},

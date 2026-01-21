@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import type { Meta, StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react-vite';
 
 /**
  * Internal dependencies
@@ -10,10 +10,10 @@ import { VisuallyHidden } from '..';
 
 const meta: Meta< typeof VisuallyHidden > = {
 	component: VisuallyHidden,
-	title: 'Components/Utilities/VisuallyHidden',
+	title: 'Components/Typography/VisuallyHidden',
 	id: 'components-visuallyhidden',
 	argTypes: {
-		children: { control: { type: null } },
+		children: { control: false },
 		as: { control: { type: 'text' } },
 	},
 	parameters: {

@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
 
 /**
  * Internal dependencies
@@ -13,10 +14,14 @@ import MenuItem from '../../menu-item';
 import { DropdownContentWrapper } from '../dropdown-content-wrapper';
 
 const meta: Meta< typeof Dropdown > = {
-	title: 'Components/Dropdown',
+	title: 'Components/Overlays/Dropdown',
+	id: 'components-dropdown',
 	component: Dropdown,
-	// @ts-expect-error - See https://github.com/storybookjs/storybook/issues/23170
 	subcomponents: { DropdownContentWrapper },
+	args: {
+		onClose: fn(),
+		onToggle: fn(),
+	},
 	argTypes: {
 		focusOnMount: {
 			options: [ 'firstElement', true, false ],
@@ -24,16 +29,15 @@ const meta: Meta< typeof Dropdown > = {
 				type: 'radio',
 			},
 		},
-		position: { control: { type: null } },
-		renderContent: { control: { type: null } },
-		renderToggle: { control: { type: null } },
-		open: { control: { type: null } },
-		defaultOpen: { control: { type: null } },
-		onToggle: { control: { type: null } },
-		onClose: { control: { type: null } },
+		position: { control: false },
+		renderContent: { control: false },
+		renderToggle: { control: false },
+		open: { control: false },
+		defaultOpen: { control: false },
+		onToggle: { control: false },
+		onClose: { control: false },
 	},
 	parameters: {
-		actions: { argTypesRegex: '^on.*' },
 		controls: {
 			expanded: true,
 		},
@@ -45,6 +49,7 @@ export const Default: StoryObj< typeof Dropdown > = {
 	args: {
 		renderToggle: ( { isOpen, onToggle } ) => (
 			<Button
+				__next40pxDefaultSize
 				onClick={ onToggle }
 				aria-expanded={ isOpen }
 				variant="primary"

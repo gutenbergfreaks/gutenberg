@@ -8,11 +8,16 @@ const transpiledPackageNames = glob( 'packages/*/src/index.{js,ts,tsx}' ).map(
 	( fileName ) => fileName.split( '/' )[ 1 ]
 );
 
+// Make sure the tests run in UTC timezone, regardless of the system timezone.
+process.env.TZ = 'UTC';
+
 module.exports = {
 	rootDir: '../../',
 	moduleNameMapper: {
 		[ `@wordpress\\/(${ transpiledPackageNames.join( '|' ) })$` ]:
 			'packages/$1/src',
+		'@wordpress/theme/design-tokens.js':
+			'<rootDir>/packages/theme/src/prebuilt/js/design-tokens.mjs',
 		'.+\\.wasm$': '<rootDir>/test/unit/config/wasm-stub.js',
 	},
 	preset: '@wordpress/jest-preset-default',
@@ -41,7 +46,7 @@ module.exports = {
 	],
 	resolver: '<rootDir>/test/unit/scripts/resolver.js',
 	transform: {
-		'^.+\\.[jt]sx?$': '<rootDir>/test/unit/scripts/babel-transformer.js',
+		'^.+\\.m?[jt]sx?$': '<rootDir>/test/unit/scripts/babel-transformer.js',
 	},
 	transformIgnorePatterns: [
 		'/node_modules/(?!(docker-compose|yaml|preact|@preact|parsel-js)/)',

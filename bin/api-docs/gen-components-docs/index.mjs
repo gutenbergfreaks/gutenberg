@@ -10,10 +10,15 @@ import path from 'path';
  * Internal dependencies
  */
 import { generateMarkdownDocs } from './markdown/index.mjs';
+import { getDescriptionsForSubcomponents } from './get-subcomponent-descriptions.mjs';
+import { getTagsFromStorybook } from './get-tags-from-storybook.mjs';
 
 const MANIFEST_GLOB = 'packages/components/src/**/docs-manifest.json';
 
-// For consistency, options should generally match the options used in Storybook.
+/**
+ * For consistency, options should generally match the options used in Storybook.
+ * @type {import('react-docgen-typescript').ParserOptions}
+ */
 const OPTIONS = {
 	shouldExtractLiteralValuesFromEnum: true,
 	shouldRemoveUndefinedFromOptional: true,
@@ -79,8 +84,10 @@ await Promise.all(
 			displayName: manifest.displayName,
 		} );
 
-		const subcomponentTypeDocs = manifest.subcomponents?.map(
-			( subcomponent ) => {
+		let subcomponentDescriptions;
+
+		const subcomponentTypeDocs = await Promise.all(
+			manifest.subcomponents?.map( async ( subcomponent ) => {
 				const docs = getTypeDocsForComponent( {
 					manifestPath,
 					componentFilePath: subcomponent.filePath,
@@ -91,10 +98,37 @@ await Promise.all(
 					docs.displayName = subcomponent.preferredDisplayName;
 				}
 
+				if ( ! subcomponent.description ) {
+					subcomponentDescriptions ??=
+						getDescriptionsForSubcomponents(
+							path.resolve(
+								path.dirname( manifestPath ),
+								manifest.filePath
+							),
+							manifest.displayName
+						);
+
+					docs.description = ( await subcomponentDescriptions )?.[
+						subcomponent.displayName
+					];
+				}
+
 				return docs;
-			}
+			} ) ?? []
 		);
-		const docs = generateMarkdownDocs( { typeDocs, subcomponentTypeDocs } );
+
+		const tags = await getTagsFromStorybook(
+			path.resolve(
+				path.dirname( manifestPath ),
+				'stories/index.story.tsx'
+			)
+		);
+
+		const docs = generateMarkdownDocs( {
+			typeDocs,
+			subcomponentTypeDocs,
+			tags,
+		} );
 		const outputFile = path.resolve(
 			path.dirname( manifestPath ),
 			'./README.md'

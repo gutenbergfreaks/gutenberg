@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import type { Meta, StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react-vite';
 import type { ComponentProps } from 'react';
 
 /**
@@ -23,7 +23,7 @@ const meta: Meta< typeof BorderControl > = {
 			action: 'onChange',
 		},
 		width: { control: { type: 'text' } },
-		value: { control: { type: null } },
+		value: { control: false },
 	},
 	parameters: {
 		controls: { expanded: true },
@@ -82,6 +82,7 @@ const Template: StoryFn< typeof BorderControl > = ( {
 
 	return (
 		<BorderControl
+			__next40pxDefaultSize
 			onChange={ onChangeMerged }
 			value={ border }
 			{ ...props }
@@ -93,6 +94,7 @@ export const Default = Template.bind( {} );
 Default.args = {
 	colors,
 	label: 'Border',
+	__next40pxDefaultSize: true,
 	enableAlpha: true,
 	enableStyle: true,
 	shouldSanitizeBorder: true,

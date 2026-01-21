@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-import type { Meta, StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
 
 /**
  * WordPress dependencies
@@ -15,17 +16,20 @@ import SelectControl from '../';
 import { InputControlPrefixWrapper } from '../../input-control/input-prefix-wrapper';
 
 const meta: Meta< typeof SelectControl > = {
-	title: 'Components/SelectControl',
+	title: 'Components/Selection & Input/Common/SelectControl',
+	id: 'components-selectcontrol',
 	component: SelectControl,
 	argTypes: {
 		help: { control: { type: 'text' } },
 		label: { control: { type: 'text' } },
 		prefix: { control: { type: 'text' } },
 		suffix: { control: { type: 'text' } },
-		value: { control: { type: null } },
+		value: { control: false },
+	},
+	args: {
+		onChange: fn(),
 	},
 	parameters: {
-		actions: { argTypesRegex: '^on.*' },
 		controls: { expanded: true },
 		docs: { canvas: { sourceState: 'shown' } },
 	},
@@ -38,6 +42,7 @@ const SelectControlWithState: StoryFn< typeof SelectControl > = ( props ) => {
 	if ( props.multiple ) {
 		return (
 			<SelectControl
+				__next40pxDefaultSize
 				{ ...props }
 				multiple
 				value={ selection }
@@ -51,6 +56,7 @@ const SelectControlWithState: StoryFn< typeof SelectControl > = ( props ) => {
 
 	return (
 		<SelectControl
+			__next40pxDefaultSize
 			{ ...props }
 			multiple={ false }
 			value={ selection?.[ 0 ] }
@@ -64,7 +70,7 @@ const SelectControlWithState: StoryFn< typeof SelectControl > = ( props ) => {
 
 export const Default = SelectControlWithState.bind( {} );
 Default.args = {
-	__nextHasNoMarginBottom: true,
+	__next40pxDefaultSize: true,
 	label: 'Label',
 	options: [
 		{ value: '', label: 'Select an Option', disabled: true },
@@ -86,7 +92,7 @@ WithLabelAndHelpText.args = {
  */
 export const WithCustomChildren = SelectControlWithState.bind( {} );
 WithCustomChildren.args = {
-	__nextHasNoMarginBottom: true,
+	__next40pxDefaultSize: true,
 	label: 'Label',
 	children: (
 		<>

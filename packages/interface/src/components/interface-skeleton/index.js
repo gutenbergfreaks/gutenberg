@@ -6,6 +6,7 @@ import clsx from 'clsx';
 /**
  * WordPress dependencies
  */
+import { NavigableRegion } from '@wordpress/admin-ui';
 import { forwardRef, useEffect } from '@wordpress/element';
 import {
 	__unstableMotion as motion,
@@ -17,11 +18,6 @@ import {
 	useViewportMatch,
 	useResizeObserver,
 } from '@wordpress/compose';
-
-/**
- * Internal dependencies
- */
-import NavigableRegion from '../navigable-region';
 
 const ANIMATION_DURATION = 0.25;
 const commonTransition = {
@@ -105,7 +101,7 @@ function InterfaceSkeleton(
 		/* translators: accessibility text for the secondary sidebar landmark region. */
 		secondarySidebar: __( 'Block Library' ),
 		/* translators: accessibility text for the settings landmark region. */
-		sidebar: __( 'Settings' ),
+		sidebar: _x( 'Settings', 'settings landmark area' ),
 		/* translators: accessibility text for the publish landmark region. */
 		actions: __( 'Publish' ),
 		/* translators: accessibility text for the footer landmark region. */

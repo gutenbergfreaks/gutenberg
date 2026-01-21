@@ -7,6 +7,7 @@ import {
 	Button,
 	ExternalLink,
 	__experimentalHStack as HStack,
+	withFilters,
 } from '@wordpress/components';
 import { useSelect, useDispatch } from '@wordpress/data';
 import { addQueryArgs } from '@wordpress/url';
@@ -20,13 +21,7 @@ import { store as coreStore } from '@wordpress/core-data';
  */
 import { store as editorStore } from '../../store';
 
-/**
- * A modal component that is displayed when a post is locked for editing by another user.
- * The modal provides information about the lock status and options to take over or exit the editor.
- *
- * @return {JSX.Element|null} The rendered PostLockedModal component.
- */
-export default function PostLockedModal() {
+function PostLockedModal() {
 	const instanceId = useInstanceId( PostLockedModal );
 	const hookName = 'core/editor/post-locked-modal-' + instanceId;
 	const { autosave, updatePostLock } = useDispatch( editorStore );
@@ -39,18 +34,21 @@ export default function PostLockedModal() {
 		activePostLock,
 		postType,
 		previewLink,
+		supportsSync,
 	} = useSelect( ( select ) => {
 		const {
 			isPostLocked,
 			isPostLockTakeover,
 			getPostLockUser,
 			getCurrentPostId,
+			getCurrentPostType,
 			getActivePostLock,
 			getEditedPostAttribute,
 			getEditedPostPreviewLink,
 			getEditorSettings,
 		} = select( editorStore );
-		const { getPostType } = select( coreStore );
+		const { getPostType, getEntityConfig } = select( coreStore );
+		const currentPostType = getCurrentPostType();
 		return {
 			isLocked: isPostLocked(),
 			isTakeover: isPostLockTakeover(),
@@ -60,6 +58,9 @@ export default function PostLockedModal() {
 			activePostLock: getActivePostLock(),
 			postType: getPostType( getEditedPostAttribute( 'type' ) ),
 			previewLink: getEditedPostPreviewLink(),
+			supportsSync: Boolean(
+				getEntityConfig( 'postType', currentPostType )?.syncConfig
+			),
 		};
 	}, [] );
 
@@ -151,6 +152,13 @@ export default function PostLockedModal() {
 
 	if ( ! isLocked ) {
 		return null;
+	}
+
+	// Avoid sending the modal if sync is supported, but retain functionality around locks etc.
+	if ( supportsSync ) {
+		if ( globalThis.IS_GUTENBERG_PLUGIN ) {
+			return null;
+		}
 	}
 
 	const userDisplayName = user.name;
@@ -277,3 +285,13 @@ export default function PostLockedModal() {
 		</Modal>
 	);
 }
+
+/**
+ * A modal component that is displayed when a post is locked for editing by another user.
+ * The modal provides information about the lock status and options to take over or exit the editor.
+ *
+ * @return {React.ReactNode} The rendered PostLockedModal component.
+ */
+export default globalThis.IS_GUTENBERG_PLUGIN
+	? withFilters( 'editor.PostLockedModal' )( PostLockedModal )
+	: PostLockedModal;

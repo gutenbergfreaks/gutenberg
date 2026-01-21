@@ -23,26 +23,23 @@ export function useShowBlockTools() {
 			getBlock,
 			getBlockMode,
 			getSettings,
-			__unstableGetEditorMode,
 			isTyping,
+			isBlockInterfaceHidden,
 		} = unlock( select( blockEditorStore ) );
 
 		const clientId =
 			getSelectedBlockClientId() || getFirstMultiSelectedBlockClientId();
 
 		const block = getBlock( clientId );
-		const editorMode = __unstableGetEditorMode();
 		const hasSelectedBlock = !! clientId && !! block;
 		const isEmptyDefaultBlock =
 			hasSelectedBlock &&
-			isUnmodifiedDefaultBlock( block ) &&
+			isUnmodifiedDefaultBlock( block, 'content' ) &&
 			getBlockMode( clientId ) !== 'html';
 		const _showEmptyBlockSideInserter =
-			clientId &&
-			! isTyping() &&
-			editorMode === 'edit' &&
-			isEmptyDefaultBlock;
+			clientId && ! isTyping() && isEmptyDefaultBlock;
 		const _showBlockToolbarPopover =
+			! isBlockInterfaceHidden() &&
 			! getSettings().hasFixedToolbar &&
 			! _showEmptyBlockSideInserter &&
 			hasSelectedBlock &&

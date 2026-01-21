@@ -12,7 +12,6 @@ import { PinnedItems } from '@wordpress/interface';
 /**
  * Internal dependencies
  */
-import CollabSidebar from '../collab-sidebar';
 import BackButton, { useHasBackButton } from './back-button';
 import CollapsibleBlockToolbar from '../collapsible-block-toolbar';
 import DocumentBar from '../document-bar';
@@ -25,6 +24,13 @@ import PostViewLink from '../post-view-link';
 import PreviewDropdown from '../preview-dropdown';
 import ZoomOutToggle from '../zoom-out-toggle';
 import { store as editorStore } from '../../store';
+import {
+	ATTACHMENT_POST_TYPE,
+	TEMPLATE_PART_POST_TYPE,
+	PATTERN_POST_TYPE,
+	NAVIGATION_POST_TYPE,
+} from '../../store/constants';
+import { unlock } from '../../lock-unlock';
 
 const toolbarVariations = {
 	distractionFreeDisabled: { y: '-50px' },
@@ -45,10 +51,7 @@ const backButtonVariations = {
 function Header( {
 	customSaveButton,
 	forceIsDirty,
-	forceDisableBlockTools,
 	setEntitiesSavedStatesCallback,
-	title,
-	isEditorIframed,
 } ) {
 	const isWideViewport = useViewportMatch( 'large' );
 	const isLargeViewport = useViewportMatch( 'medium' );
@@ -60,15 +63,22 @@ function Header( {
 		showIconLabels,
 		hasFixedToolbar,
 		hasBlockSelection,
-		isNestedEntity,
+		hasSectionRootClientId,
+		isStylesCanvasActive,
+		isAttachment,
 	} = useSelect( ( select ) => {
 		const { get: getPreference } = select( preferencesStore );
 		const {
 			getEditorMode,
-			getEditorSettings,
 			getCurrentPostType,
 			isPublishSidebarOpened: _isPublishSidebarOpened,
 		} = select( editorStore );
+		const { getStylesPath, getShowStylebook } = unlock(
+			select( editorStore )
+		);
+		const { getBlockSelectionStart, getSectionRootClientId } = unlock(
+			select( blockEditorStore )
+		);
 
 		return {
 			postType: getCurrentPostType(),
@@ -76,26 +86,41 @@ function Header( {
 			isPublishSidebarOpened: _isPublishSidebarOpened(),
 			showIconLabels: getPreference( 'core', 'showIconLabels' ),
 			hasFixedToolbar: getPreference( 'core', 'fixedToolbar' ),
-			hasBlockSelection:
-				!! select( blockEditorStore ).getBlockSelectionStart(),
-			isNestedEntity:
-				!! getEditorSettings().onNavigateToPreviousEntityRecord,
+			hasBlockSelection: !! getBlockSelectionStart(),
+			hasSectionRootClientId: !! getSectionRootClientId(),
+			isStylesCanvasActive:
+				!! getStylesPath()?.startsWith( '/revisions' ) ||
+				getShowStylebook(),
+			isAttachment:
+				getCurrentPostType() === ATTACHMENT_POST_TYPE &&
+				window?.__experimentalMediaEditor,
 		};
 	}, [] );
 
-	const canBeZoomedOut = [ 'post', 'page', 'wp_template' ].includes(
-		postType
-	);
+	const canBeZoomedOut =
+		[ 'post', 'page', 'wp_template' ].includes( postType ) &&
+		hasSectionRootClientId;
+
+	const disablePreviewOption =
+		[
+			ATTACHMENT_POST_TYPE,
+			NAVIGATION_POST_TYPE,
+			TEMPLATE_PART_POST_TYPE,
+			PATTERN_POST_TYPE,
+		].includes( postType ) || isStylesCanvasActive;
 
 	const [ isBlockToolsCollapsed, setIsBlockToolsCollapsed ] =
 		useState( true );
 
 	const hasCenter =
-		( ! hasBlockSelection || isBlockToolsCollapsed ) &&
-		! isTooNarrowForDocumentBar;
+		! isTooNarrowForDocumentBar &&
+		( ! hasFixedToolbar ||
+			( hasFixedToolbar &&
+				( ! hasBlockSelection || isBlockToolsCollapsed ) ) );
 	const hasBackButton = useHasBackButton();
+
 	/*
-	 * The edit-post-header classname is only kept for backward compatability
+	 * The edit-post-header classname is only kept for backward compatibility
 	 * as some plugins might be relying on its presence.
 	 */
 	return (
@@ -114,9 +139,13 @@ function Header( {
 				className="editor-header__toolbar"
 				transition={ { type: 'tween' } }
 			>
-				<DocumentTools
-					disableBlockTools={ forceDisableBlockTools || isTextEditor }
-				/>
+				{ ! isAttachment && (
+					<DocumentTools
+						disableBlockTools={
+							isStylesCanvasActive || isTextEditor
+						}
+					/>
+				) }
 				{ hasFixedToolbar && isLargeViewport && (
 					<CollapsibleBlockToolbar
 						isCollapsed={ isBlockToolsCollapsed }
@@ -130,7 +159,7 @@ function Header( {
 					variants={ toolbarVariations }
 					transition={ { type: 'tween' } }
 				>
-					<DocumentBar title={ title } />
+					<DocumentBar />
 				</motion.div>
 			) }
 			<motion.div
@@ -149,19 +178,21 @@ function Header( {
 					<PostSavedState forceIsDirty={ forceIsDirty } />
 				) }
 
-				{ canBeZoomedOut && isEditorIframed && isWideViewport && (
-					<ZoomOutToggle disabled={ forceDisableBlockTools } />
-				) }
+				<PostViewLink />
 
 				<PreviewDropdown
 					forceIsAutosaveable={ forceIsDirty }
-					disabled={ isNestedEntity }
+					disabled={ disablePreviewOption }
 				/>
+
 				<PostPreviewButton
 					className="editor-header__post-preview-button"
 					forceIsAutosaveable={ forceIsDirty }
 				/>
-				<PostViewLink />
+
+				{ isWideViewport && canBeZoomedOut && (
+					<ZoomOutToggle disabled={ isStylesCanvasActive } />
+				) }
 
 				{ ( isWideViewport || ! showIconLabels ) && (
 					<PinnedItems.Slot scope="core" />
@@ -175,10 +206,8 @@ function Header( {
 						}
 					/>
 				) }
-				<CollabSidebar />
-
 				{ customSaveButton }
-				<MoreMenu />
+				{ ! isAttachment && <MoreMenu /> }
 			</motion.div>
 		</div>
 	);

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import type { Meta, StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react-vite';
 
 /**
  * Internal dependencies
@@ -10,10 +10,14 @@ import BaseControl, { useBaseControlProps } from '..';
 import Button from '../../button';
 
 const meta: Meta< typeof BaseControl > = {
-	title: 'Components/BaseControl',
+	title: 'Components/Selection & Input/Common/BaseControl',
+	id: 'components-basecontrol',
 	component: BaseControl,
+	subcomponents: {
+		'BaseControl.VisualLabel': BaseControl.VisualLabel,
+	},
 	argTypes: {
-		children: { control: { type: null } },
+		children: { control: false },
 		help: { control: { type: 'text' } },
 		label: { control: { type: 'text' } },
 	},
@@ -37,7 +41,6 @@ const BaseControlWithTextarea: StoryFn< typeof BaseControl > = ( props ) => {
 export const Default: StoryFn< typeof BaseControl > =
 	BaseControlWithTextarea.bind( {} );
 Default.args = {
-	__nextHasNoMarginBottom: true,
 	label: 'Label text',
 };
 
@@ -61,7 +64,9 @@ export const WithVisualLabel: StoryFn< typeof BaseControl > = ( props ) => {
 		<BaseControl { ...props }>
 			<BaseControl.VisualLabel>Visual label</BaseControl.VisualLabel>
 			<div>
-				<Button variant="secondary">Select an author</Button>
+				<Button __next40pxDefaultSize variant="secondary">
+					Select an author
+				</Button>
 			</div>
 		</BaseControl>
 	);

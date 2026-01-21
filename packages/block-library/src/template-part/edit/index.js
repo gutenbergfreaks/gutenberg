@@ -21,7 +21,6 @@ import {
 	MenuItem,
 	ToolbarButton,
 } from '@wordpress/components';
-import { useAsyncList } from '@wordpress/compose';
 import { __, sprintf } from '@wordpress/i18n';
 import { store as coreStore } from '@wordpress/core-data';
 import { useState } from '@wordpress/element';
@@ -41,6 +40,23 @@ import {
 	useTemplatePartArea,
 } from './utils/hooks';
 
+const SUPPORTED_AREAS = [ 'header', 'footer' ];
+
+/**
+ * Returns the list of supported template part areas for pattern replacement.
+ * Includes 'overlay' only if the navigation overlays experiment is enabled.
+ *
+ * @return {string[]} Array of supported area names.
+ */
+function getSupportedAreas() {
+	const isOverlayExperimentEnabled =
+		typeof window !== 'undefined' &&
+		window.__experimentalNavigationOverlays === true;
+	return isOverlayExperimentEnabled
+		? [ ...SUPPORTED_AREAS, 'navigation-overlay' ]
+		: SUPPORTED_AREAS;
+}
+
 function ReplaceButton( {
 	isEntityAvailable,
 	area,
@@ -55,10 +71,9 @@ function ReplaceButton( {
 		templatePartId
 	);
 	const hasReplacements = !! templateParts.length;
+	const supportedAreas = getSupportedAreas();
 	const canReplace =
-		isEntityAvailable &&
-		hasReplacements &&
-		( area === 'header' || area === 'footer' );
+		isEntityAvailable && hasReplacements && supportedAreas.includes( area );
 
 	if ( ! canReplace ) {
 		return null;
@@ -81,11 +96,11 @@ function TemplatesList( { area, clientId, isEntityAvailable, onSelect } ) {
 	// This hook fetches patterns, so don't run it unconditionally in the main
 	// edit function!
 	const blockPatterns = useAlternativeBlockPatterns( area, clientId );
+	const supportedAreas = getSupportedAreas();
 	const canReplace =
 		isEntityAvailable &&
 		!! blockPatterns.length &&
-		( area === 'header' || area === 'footer' );
-	const shownTemplates = useAsyncList( blockPatterns );
+		supportedAreas.includes( area );
 
 	if ( ! canReplace ) {
 		return null;
@@ -96,9 +111,8 @@ function TemplatesList( { area, clientId, isEntityAvailable, onSelect } ) {
 			<BlockPatternsList
 				label={ __( 'Templates' ) }
 				blockPatterns={ blockPatterns }
-				shownPatterns={ shownTemplates }
 				onClickPattern={ onSelect }
-				showTitle={ false }
+				showTitlesAsTooltip
 			/>
 		</PanelBody>
 	);
@@ -214,7 +228,7 @@ export default function TemplatePartEdit( {
 			<TagName { ...blockProps }>
 				<Warning>
 					{ sprintf(
-						/* translators: %s: Template part slug */
+						/* translators: %s: Template part slug. */
 						__(
 							'Template part has been deleted or is unavailable: %s'
 						),
@@ -243,14 +257,16 @@ export default function TemplatePartEdit( {
 					canUserEdit && (
 						<BlockControls group="other">
 							<ToolbarButton
-								onClick={ () =>
+								onClick={ () => {
 									onNavigateToEntityRecord( {
 										postId: templatePartId,
 										postType: 'wp_template_part',
-									} )
-								}
+									} );
+								} }
 							>
-								{ __( 'Edit' ) }
+								{ window?.__experimentalContentOnlyPatternInsertion
+									? __( 'Edit section' )
+									: __( 'Edit' ) }
 							</ToolbarButton>
 						</BlockControls>
 					) }
@@ -263,6 +279,7 @@ export default function TemplatePartEdit( {
 							templatePartId={ templatePartId }
 							defaultWrapper={ areaObject.tagName }
 							hasInnerBlocks={ hasInnerBlocks }
+							clientId={ clientId }
 						/>
 					</InspectorControls>
 				) }

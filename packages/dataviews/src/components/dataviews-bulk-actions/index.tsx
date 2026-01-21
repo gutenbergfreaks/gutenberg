@@ -1,24 +1,63 @@
 /**
+ * External dependencies
+ */
+import type { ReactElement } from 'react';
+
+/**
  * WordPress dependencies
  */
-import {
-	Button,
-	CheckboxControl,
-	__experimentalHStack as HStack,
-} from '@wordpress/components';
-import { __, sprintf, _n } from '@wordpress/i18n';
+import { Button, CheckboxControl } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
 import { useMemo, useState, useRef, useContext } from '@wordpress/element';
 import { useRegistry } from '@wordpress/data';
 import { closeSmall } from '@wordpress/icons';
+import { useViewportMatch } from '@wordpress/compose';
+import { Stack } from '@wordpress/ui';
 
 /**
  * Internal dependencies
  */
 import DataViewsContext from '../dataviews-context';
-import { ActionWithModal } from '../dataviews-item-actions';
-import type { Action } from '../../types';
-import type { SetSelection } from '../../private-types';
+import { ActionModal } from '../dataviews-item-actions';
+import type { Action, ActionModal as ActionModalType } from '../../types';
+import type { SetSelection } from '../../types/private';
 import type { ActionTriggerProps } from '../dataviews-item-actions';
+import getFooterMessage from '../../utils/get-footer-message';
+
+interface ActionWithModalProps< Item > {
+	action: ActionModalType< Item >;
+	items: Item[];
+	ActionTriggerComponent: (
+		props: ActionTriggerProps< Item >
+	) => ReactElement;
+}
+
+function ActionWithModal< Item >( {
+	action,
+	items,
+	ActionTriggerComponent,
+}: ActionWithModalProps< Item > ) {
+	const [ isModalOpen, setIsModalOpen ] = useState( false );
+	const actionTriggerProps = {
+		action,
+		onClick: () => {
+			setIsModalOpen( true );
+		},
+		items,
+	};
+	return (
+		<>
+			<ActionTriggerComponent { ...actionTriggerProps } />
+			{ isModalOpen && (
+				<ActionModal
+					action={ action }
+					items={ items }
+					closeModal={ () => setIsModalOpen( false ) }
+				/>
+			) }
+		</>
+	);
+}
 
 export function useHasAPossibleBulkAction< Item >(
 	actions: Action< Item >[],
@@ -83,7 +122,6 @@ export function BulkSelectionCheckbox< Item >( {
 	return (
 		<CheckboxControl
 			className="dataviews-view-table-selection-checkbox"
-			__nextHasNoMarginBottom
 			checked={ areAllSelected }
 			indeterminate={ ! areAllSelected && !! selectedItems.length }
 			onChange={ () => {
@@ -115,6 +153,10 @@ interface ToolbarContentProps< Item > {
 	data: Item[];
 	actions: Action< Item >[];
 	getItemId: ( item: Item ) => string;
+	paginationInfo: {
+		totalItems: number;
+		totalPages: number;
+	};
 }
 
 function ActionTrigger< Item >( {
@@ -125,18 +167,32 @@ function ActionTrigger< Item >( {
 }: ActionTriggerProps< Item > ) {
 	const label =
 		typeof action.label === 'string' ? action.label : action.label( items );
+	const isMobile = useViewportMatch( 'medium', '<' );
+
+	if ( isMobile ) {
+		return (
+			<Button
+				disabled={ isBusy }
+				accessibleWhenDisabled
+				label={ label }
+				icon={ action.icon }
+				size="compact"
+				onClick={ onClick }
+				isBusy={ isBusy }
+			/>
+		);
+	}
+
 	return (
 		<Button
 			disabled={ isBusy }
 			accessibleWhenDisabled
-			label={ label }
-			icon={ action.icon }
-			isDestructive={ action.isDestructive }
 			size="compact"
 			onClick={ onClick }
 			isBusy={ isBusy }
-			tooltipPosition="top"
-		/>
+		>
+			{ label }
+		</Button>
 	);
 }
 
@@ -160,7 +216,7 @@ function ActionButton< Item >( {
 				key={ action.id }
 				action={ action }
 				items={ selectedEligibleItems }
-				ActionTrigger={ ActionTrigger }
+				ActionTriggerComponent={ ActionTrigger }
 			/>
 		);
 	}
@@ -190,29 +246,23 @@ function renderFooterContent< Item >(
 	selectedItems: Item[],
 	actionInProgress: string | null,
 	setActionInProgress: ( actionId: string | null ) => void,
-	onChangeSelection: SetSelection
+	onChangeSelection: SetSelection,
+	paginationInfo: {
+		totalItems: number;
+		totalPages: number;
+	}
 ) {
-	const message =
-		selectedItems.length > 0
-			? sprintf(
-					/* translators: %d: number of items. */
-					_n(
-						'%d Item selected',
-						'%d Items selected',
-						selectedItems.length
-					),
-					selectedItems.length
-			  )
-			: sprintf(
-					/* translators: %d: number of items. */
-					_n( '%d Item', '%d Items', data.length ),
-					data.length
-			  );
+	const message = getFooterMessage(
+		selection.length,
+		data.length,
+		paginationInfo.totalItems
+	);
 	return (
-		<HStack
-			expanded={ false }
+		<Stack
+			direction="row"
 			className="dataviews-bulk-actions-footer__container"
-			spacing={ 3 }
+			gap="sm"
+			align="center"
 		>
 			<BulkSelectionCheckbox
 				selection={ selection }
@@ -224,10 +274,10 @@ function renderFooterContent< Item >(
 			<span className="dataviews-bulk-actions-footer__item-count">
 				{ message }
 			</span>
-			<HStack
+			<Stack
+				direction="row"
 				className="dataviews-bulk-actions-footer__action-buttons"
-				expanded={ false }
-				spacing={ 1 }
+				gap="2xs"
 			>
 				{ actionsToShow.map( ( action ) => {
 					return (
@@ -254,8 +304,8 @@ function renderFooterContent< Item >(
 						} }
 					/>
 				) }
-			</HStack>
-		</HStack>
+			</Stack>
+		</Stack>
 	);
 }
 
@@ -265,11 +315,13 @@ function FooterContent< Item >( {
 	onChangeSelection,
 	data,
 	getItemId,
+	paginationInfo,
 }: ToolbarContentProps< Item > ) {
 	const [ actionInProgress, setActionInProgress ] = useState< string | null >(
 		null
 	);
 	const footerContentRef = useRef< JSX.Element | null >( null );
+	const isMobile = useViewportMatch( 'medium', '<' );
 
 	const bulkActions = useMemo(
 		() => actions.filter( ( action ) => action.supportsBulk ),
@@ -296,14 +348,14 @@ function FooterContent< Item >( {
 			actions.filter( ( action ) => {
 				return (
 					action.supportsBulk &&
-					action.icon &&
+					( ! isMobile || action.icon ) &&
 					selectedItems.some(
 						( item ) =>
 							! action.isEligible || action.isEligible( item )
 					)
 				);
 			} ),
-		[ actions, selectedItems ]
+		[ actions, selectedItems, isMobile ]
 	);
 	if ( ! actionInProgress ) {
 		if ( footerContentRef.current ) {
@@ -318,7 +370,8 @@ function FooterContent< Item >( {
 			selectedItems,
 			actionInProgress,
 			setActionInProgress,
-			onChangeSelection
+			onChangeSelection,
+			paginationInfo
 		);
 	} else if ( ! footerContentRef.current ) {
 		footerContentRef.current = renderFooterContent(
@@ -330,7 +383,8 @@ function FooterContent< Item >( {
 			selectedItems,
 			actionInProgress,
 			setActionInProgress,
-			onChangeSelection
+			onChangeSelection,
+			paginationInfo
 		);
 	}
 	return footerContentRef.current;
@@ -343,6 +397,7 @@ export function BulkActionsFooter() {
 		actions = EMPTY_ARRAY,
 		onChangeSelection,
 		getItemId,
+		paginationInfo,
 	} = useContext( DataViewsContext );
 	return (
 		<FooterContent
@@ -351,6 +406,7 @@ export function BulkActionsFooter() {
 			data={ data }
 			actions={ actions }
 			getItemId={ getItemId }
+			paginationInfo={ paginationInfo }
 		/>
 	);
 }

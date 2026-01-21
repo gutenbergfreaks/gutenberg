@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import type { Meta, StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react-vite';
 
 /**
  * Internal dependencies
@@ -29,7 +29,9 @@ export default meta;
 
 const Template: StoryFn< typeof Theme > = ( args ) => (
 	<Theme { ...args }>
-		<Button variant="primary">Hello</Button>
+		<Button __next40pxDefaultSize variant="primary">
+			Hello
+		</Button>
 	</Theme>
 );
 
@@ -37,11 +39,13 @@ export const Default = Template.bind( {} );
 Default.args = {};
 
 export const Nested: StoryFn< typeof Theme > = ( args ) => (
-	<Theme accent="tomato">
-		<Button variant="primary">Outer theme (hardcoded)</Button>
+	<Theme accent="crimson">
+		<Button __next40pxDefaultSize variant="primary">
+			Outer theme (hardcoded)
+		</Button>
 
 		<Theme { ...args }>
-			<Button variant="primary">
+			<Button __next40pxDefaultSize variant="primary">
 				Inner theme (set via Storybook controls)
 			</Button>
 		</Theme>
